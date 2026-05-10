@@ -1,0 +1,34 @@
+---
+description: CardWise MVP — read AGENTS.md and agent_docs before coding
+alwaysApply: true
+---
+
+# CardWise — Cursor agent rules
+
+## Project context
+
+**App:** CardWise — explainable card recommendation MVP (cashback + points tracks).  
+**Stack:** Next.js (App Router), TypeScript, Tailwind + shadcn/ui, Supabase, Vercel, PostHog.  
+**Stage:** MVP development (P0 only unless scope explicitly expands).  
+**User level:** Developer — prefer architecture, types, and tests over hand-wavy shortcuts.
+
+## Directives
+
+1. **Master plan:** Read `AGENTS.md` first for phase, constraints, and behaviors.
+2. **Details:** Use `agent_docs/` for stack, patterns, PRD extract, and testing.
+3. **Plan-first:** Propose a short plan before multi-file edits; then implement incrementally.
+4. **Verify:** Run lint/tests/typecheck after logical changes; follow `REVIEW-CHECKLIST.md`.
+5. **No human-linter cosplay:** Use project scripts (`npm run lint`, `npm test`) instead of guessing style.
+6. **Communication:** Be concise; one clarifying question when blocked.
+7. **Memory:** Log durable decisions and quirks in `MEMORY.md`.
+
+## Commands (once `package.json` exists)
+
+- `npm run dev` — local app
+- `npm test` — Vitest suite
+- `npm run lint` — ESLint
+- `npm run build` — production build
+
+## What not to do
+
+See `AGENTS.md` → “What NOT To Do” and “Engineering Constraints.”
