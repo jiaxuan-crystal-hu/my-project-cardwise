@@ -1,110 +1,188 @@
 # CardWise
 
-Explainable credit- and debit-card recommendations (MVP). Product and architecture docs live in `docs/`; AI agent instructions in `AGENTS.md` and `agent_docs/`.
+Explainable credit- and debit-card recommendations for cashback and points—**no bank linking** in the MVP. Users sign in, manage a **card wallet**, and get **category-based recommendations** with a simple rationale.
+
+## Live app
+
+**Production (example):** [https://my-project-cardwise-deploy.vercel.app/](https://my-project-cardwise-deploy.vercel.app/)
+
+Sign up or log in, add cards under **Card wallet**, then use **Recommend** for a purchase category.
+
+---
+
+## Tech stack
+
+- **Next.js 15** (App Router) + **React 19** + **TypeScript**
+- **Supabase** — Auth + Postgres (Row Level Security)
+- **Tailwind CSS**
+- **Vercel** — typical hosting (connect GitHub, set env vars)
+
+More product and architecture detail: `docs/`. Agent-oriented notes: [`AGENTS.md`](AGENTS.md).
+
+---
 
 ## Requirements
 
-- **Node.js** matching [Next.js 15](https://nextjs.org/docs/app/getting-started/installation): **`^18.18.0 || ^19.8.0 || >=20.0.0`**. **Node 16 (e.g. 16.13.2) is not supported** and will fail when running `next dev` / `next build`.
-- **Recommended:** **Node 20+** (current `@supabase/supabase-js` releases target Node 20+; use 20 or 22 LTS to avoid engine warnings).
-- **npm**
-- A **Supabase** project for Auth + Postgres
+| Tool | Notes |
+|------|--------|
+| **Node.js** | Per `package.json` engines: 18.18+, 19.8+, or 20+. **Node 16 is not supported.** Prefer **20 or 22 LTS**. |
+| **npm** | Comes with Node. |
+| **Supabase project** | For local dev: create a free project at [supabase.com](https://supabase.com/dashboard). |
 
-### Install or upgrade Node (no nvm required)
+This repo ships **`.nvmrc`** / **`.node-version`** (Node **22**) for `nvm`, `fnm`, etc. `.npmrc` sets **`engine-strict=true`**, so `npm install` fails early if Node is out of range.
 
-If `nvm` is not installed (`bash: nvm: command not found`), pick **one** of these on macOS:
+### Install or upgrade Node (macOS)
 
-**Option A — Homebrew (simplest if you use brew)**
+**Homebrew**
 
 ```bash
 brew install node
-node -v   # expect v18.18+ (prefer 20+ or 22 LTS)
+node -v   # expect v18.18+; prefer v20+ or v22 LTS
 ```
 
-If you need exactly **22** to match `.nvmrc`, use `brew install node@22` and follow `brew info node@22` for PATH / linking.
+**Match repo exactly (Node 22)**
 
-**Option B — Official installer**
+```bash
+brew install node@22
+# Follow `brew info node@22` for PATH / linking if needed
+```
 
-Download the **LTS** macOS installer from [nodejs.org](https://nodejs.org/), run it, then open a **new** terminal and run `node -v`.
-
-**Option C — fnm** (lightweight version manager; reads `.node-version`)
+**fnm** (reads `.node-version`)
 
 ```bash
 brew install fnm
-eval "$(fnm env)"   # add same line to ~/.bashrc or ~/.zshrc
+eval "$(fnm env)"   # add to ~/.zshrc or ~/.bashrc for persistence
 cd /path/to/CardWise
-fnm install
-fnm use
+fnm install && fnm use
 node -v
 ```
 
-**Option D — nvm** (only if you want it)
+If you see **`npm ERR! EBADENGINE`** with “Actual: node v16.x”, your shell is still using old Node. Install 20+, open a **new terminal**, run `which node` and `node -v`, and fix **PATH** so Homebrew’s Node wins (see previous README troubleshooting or `brew info node`).
 
-Install from [nvm-sh/nvm](https://github.com/nvm-sh/nvm#installing-and-updating), restart your shell, then from this repo: `nvm install` (uses `.nvmrc`).
+---
 
-This repo includes **`.nvmrc`** and **`.node-version`** set to **22** for tools that read them (`nvm`, `fnm`, `asdf`).
+## Installation
 
-`package.json` sets **`engine-strict=true`** in `.npmrc`, so `npm install` will **error** if your Node version is outside the supported range instead of failing later at `next build`.
-
-### `npm ERR! EBADENGINE` — “Actual: node v16.x”
-
-That message means **this shell is still using Node 16**. Installing Node 20+ is not enough until your **PATH** picks it up.
-
-1. Install a supported Node (see **Install or upgrade Node** above), e.g. `brew install node`.
-2. **Open a new terminal tab/window** (or run `hash -r` in bash).
-3. Check what runs:
-
-   ```bash
-   which node
-   node -v
-   ```
-
-   You want `node -v` to show **v18.18+** or **v20+**. If it still shows **v16**, your PATH prefers an old Node (often `/usr/local/bin/node`). Put Homebrew first, e.g. in `~/.zshrc`:
-
-   ```bash
-   export PATH="/opt/homebrew/bin:$PATH"   # Apple Silicon; Intel Mac may use /usr/local/bin
-   ```
-
-   Then `source ~/.zshrc` and verify again.
-
-4. **Do not** remove `engine-strict` to “fix” the error—Next.js still will not run on Node 16.
-
-## Quick start
+From the repository root:
 
 ```bash
-node -v   # must be 18.18+, 19.8+, or 20+ (see Requirements)
+git clone <YOUR_REPO_URL>
+cd CardWise
+node -v    # confirm supported version
 npm install
+```
+
+Copy environment template and fill in values from your Supabase project (**Settings → API**):
+
+```bash
 cp .env.example .env.local
-# Edit .env.local: set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY (no quotes; same folder as package.json)
-# Restart the dev server whenever you change .env.local — Next.js only loads env at startup.
+```
+
+Edit **`.env.local`** (same folder as `package.json`):
+
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL (no quotes) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `anon` `public` key (no quotes) |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3000` for local dev; your **public** site URL in production |
+
+**Never commit `.env.local`** — it is gitignored. Optional: `NEXT_PUBLIC_POSTHOG_*` for analytics (see `.env.example`).
+
+Restart the dev server after any change to `.env.local` (Next loads env at startup).
+
+---
+
+## How to run
+
+### Development
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), sign up, then add cards under **Card wallet** (`/dashboard/wallet`) and run **Recommend** (`/dashboard/recommend`) for a purchase category. Sample data only has rules for a few category/card pairs—add `reward_rules` in Supabase to cover more.
+Open [http://localhost:3000](http://localhost:3000).
 
-### Supabase configuration
+### Production build (local smoke test)
 
-1. **Auth → URL configuration:** set Site URL to `http://localhost:3000` (and your production URL later).  
-2. **Redirect URLs:** add `http://localhost:3000/auth/callback` (and production equivalent).  
-3. **Database:** run `src/db/migrations/001_init.sql` in the SQL editor, then `src/db/seeds/002_sample_cards.sql` for sample catalog rows.
+```bash
+npm run build
+npm run start
+```
 
-### Scripts
+Then open [http://localhost:3000](http://localhost:3000).
 
-| Command        | Description              |
-|----------------|--------------------------|
-| `npm run dev`  | Next.js dev server       |
-| `npm run build`| Production build         |
-| `npm run lint` | ESLint                   |
-| `npm test`     | Vitest (unit tests)      |
+### Other scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Next.js dev server with hot reload |
+| `npm run build` | Production build |
+| `npm run start` | Serve production build (run after `build`) |
+| `npm run lint` | ESLint |
+| `npm test` | Vitest (unit tests) |
+| `npm run test:watch` | Vitest watch mode |
+| `npm run db:emit-task4` | Regenerate `src/db/seeds/004_task4_reward_rules.sql` from TS sources |
+| `npm run db:verify-task4` | Verify Task 4 seed invariants |
+
+Optional before pushing: `npx tsc --noEmit`.
+
+---
+
+## Supabase setup (local or new project)
+
+### 1. Auth URLs
+
+In Supabase: **Authentication → URL configuration**
+
+- **Site URL:** `http://localhost:3000` (dev) or your deployed origin (e.g. `https://my-project-cardwise-deploy.vercel.app`).
+- **Redirect URLs:** include  
+  - `http://localhost:3000/auth/callback`  
+  - plus your production callback, e.g. `https://my-project-cardwise-deploy.vercel.app/auth/callback`
+
+### 2. Database SQL
+
+In **SQL Editor**, run **migrations in order** (full contents of each file):
+
+1. `src/db/migrations/001_init.sql`
+2. `src/db/migrations/002_reward_rules_priority_and_fallback.sql`
+3. `src/db/migrations/003_user_cards_custom_cash_top_category.sql`
+
+Then apply **seeds** depending on what you want:
+
+| Seed file | Purpose |
+|-----------|---------|
+| `src/db/seeds/002_sample_cards.sql` | Minimal sample catalog |
+| `src/db/seeds/003_expand_catalog.sql` | Larger sample catalog |
+| `src/db/seeds/004_task4_reward_rules.sql` | Task 4 reward rules (pairs with your Task 4 catalog strategy—see `docs/`) |
+
+Avoid mixing duplicate card definitions across seeds unless you understand the overlap; see `docs/phase-004-handoff.md` and seeding docs for the intended combo.
+
+---
+
+## Deploy (summary)
+
+1. Push code to **GitHub**.
+2. **Vercel:** Import the repo, framework **Next.js**, deploy.
+3. **Vercel → Settings → Environment variables** (Production): set `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL` to your **live** origin (e.g. `https://my-project-cardwise-deploy.vercel.app`).
+4. **Supabase:** Production project (or same project with care): run the same migrations + seeds; add production **Site URL** and **redirect** for `/auth/callback`.
+5. Redeploy after changing env vars.
+
+---
 
 ## Repository layout
 
-- `src/app/` — App Router pages (auth, dashboard, wallet, auth callback)
-- `src/app/api/` — Route handlers (`/api/cards`, `/api/user/cards`, `/api/recommend`, `/api/recommendation-history`, …)
-- `src/lib/supabase/` — Browser + server Supabase clients
-- `src/services/` — Domain logic (cards catalog/wallet, recommendation helpers)
-- `src/db/migrations` & `src/db/seeds` — SQL artifacts to apply in Supabase
-- `docs/` — PRD, technical design, research
+| Path | Contents |
+|------|----------|
+| `src/app/` | App Router: marketing, auth, legal pages, `dashboard/*` |
+| `src/app/api/` | Route handlers: cards, wallet, recommend, recommendation-history, … |
+| `src/lib/supabase/` | Browser, server, and middleware Supabase clients |
+| `src/services/` | Catalog, wallet, recommendation engine |
+| `src/db/migrations/` | Schema migrations (apply in order) |
+| `src/db/seeds/` | Seed SQL |
+| `docs/` | PRD, handoffs, technical notes |
 
-## Deploy
+---
 
-Connect the GitHub repo to **Vercel**, set the same `NEXT_PUBLIC_*` env vars, add production **Auth redirect URLs** in Supabase, and deploy from the default Next.js preset.
+## Legal
+
+`/terms`, `/privacy`, and `/disclaimer` may contain placeholders—replace before a wide public launch. The app shows **estimates only; not financial advice**; no bank or issuer access in the MVP.
