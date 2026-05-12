@@ -66,7 +66,7 @@ If you see **`npm ERR! EBADENGINE`** with “Actual: node v16.x”, your shell i
 From the repository root:
 
 ```bash
-git clone <YOUR_REPO_URL>
+git clone https://github.com/jiaxuan-crystal-hu/my-project-cardwise.git
 cd CardWise
 node -v    # confirm supported version
 npm install
